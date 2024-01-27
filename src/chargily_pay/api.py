@@ -1,3 +1,5 @@
+import hmac
+import hashlib
 from dataclasses import asdict
 
 import requests
@@ -5,7 +7,6 @@ from requests.compat import urljoin
 
 from .entity import Checkout, Customer, PaymentLink, Price, Product
 from .settings import *
-
 
 
 # drop None values
@@ -138,6 +139,17 @@ class ChargilyClient:
         response.raise_for_status()
         return response.json()
 
+    # todo: retrieve product prices
+    def retrieve_product_prices(self, id, per_page: int = 10, page: int = 1):
+        """Retrieve product prices"""
+        response = requests.get(
+            urljoin(self.url, f"products/{id}/prices?page={page}"),
+            headers=self.headers,
+            params={"per_page": per_page},
+        )
+        response.raise_for_status()
+        return response.json()
+     
     # ==================================
     # Prices
     # ==================================
@@ -179,6 +191,8 @@ class ChargilyClient:
         )
         response.raise_for_status()
         return response.json()
+
+
 
     # ==================================
     # Checkouts
@@ -224,6 +238,15 @@ class ChargilyClient:
 
         response.raise_for_status()
         return response.json()
+
+    def expire_checkout(self, id):
+        """Expire a checkout"""
+        response = requests.post(
+            urljoin(self.url, f"checkouts/{id}/expire"), headers=self.headers
+        )
+        response.raise_for_status()
+        return response.json()
+
 
     # ==================================
     # Payment Links
@@ -280,4 +303,20 @@ class ChargilyClient:
         response.raise_for_status()
         return response.json()
 
+    # ==================================
+    # Utils
+    # ==================================
 
+    def validate_signature(self, signature: str, payload: str):
+        computed_signature = hmac.new(
+            self.secret.encode("utf-8"),
+            payload.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+        if hmac.compare_digest(signature, computed_signature):
+            return True
+        return False
+
+
+    

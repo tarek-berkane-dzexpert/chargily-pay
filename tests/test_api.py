@@ -1,4 +1,3 @@
-from math import e
 import os
 import unittest
 
@@ -135,6 +134,25 @@ class TestChargilyClient(unittest.TestCase):
 
         response = self.chargily.list_products(per_page=1, page=1)
         self.assertEqual(type(response), dict)
+
+    def test_retrieve_product_prices(self):
+        product = Product(
+            name="Product name",
+            description="Product description",
+        )
+        response = self.chargily.create_product(product)
+        product_id = response["id"]
+        response = self.chargily.retrieve_product_prices(product_id)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(response["data"], [])
+
+        self.chargily.create_price(
+            Price(amount=100, currency="dzd", product_id=product_id)
+        )
+        response = self.chargily.retrieve_product_prices(product_id)
+        self.assertEqual(type(response), dict)
+        self.assertEqual(len(response["data"]), 1)
+        self.assertEqual(response["data"][0]["amount"], 100)
 
     # Price
 
@@ -294,6 +312,29 @@ class TestChargilyClient(unittest.TestCase):
         checkout_id = checkout["id"]
         checkout = self.chargily.retrieve_checkout_items(checkout_id)
         self.assertEqual(type(checkout), dict)
+
+    def test_expire_checkout(self):
+        product = Product(
+            name="Product name",
+            description="Product description",
+        )
+        response = self.chargily.create_product(product)
+        product_id = response["id"]
+        price = self.chargily.create_price(
+            Price(amount=100, currency="dzd", product_id=product_id)
+        )
+        price_id = price["id"]
+        checkout = self.chargily.create_checkout(
+            Checkout(
+                items=[{"price": price_id, "quantity": 1}],
+                success_url="https://example.com/success",
+                failure_url="https://example.com/failure",
+            )
+        )
+        checkout_id = checkout["id"]
+        checkout = self.chargily.expire_checkout(checkout_id)
+        self.assertEqual(type(checkout), dict)
+        self.assertEqual(checkout["status"], "expired")
 
     # Payment links
 
