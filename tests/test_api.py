@@ -1,3 +1,4 @@
+from itertools import product
 import os
 import unittest
 
@@ -233,6 +234,18 @@ class TestChargilyClient(unittest.TestCase):
             )
         )
         self.assertEqual(type(checkout), dict)
+
+    def test_create_checkout_with_amount(self):
+        checkout = self.chargily.create_checkout(
+            Checkout(
+                amount=1000,
+                currency="dzd",
+                success_url="https://example.com/success",
+            )
+        )
+        self.assertEqual(type(checkout), dict)
+
+
 
     def test_create_checkout_with_customer(self):
         product = Product(

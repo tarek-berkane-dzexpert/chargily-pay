@@ -41,14 +41,26 @@ class CheckoutItem:
 
 @dataclass
 class Checkout:
-    items: CheckoutItem
     success_url: str
+    items: Optional[CheckoutItem] = None
+    amount: Optional[int] = None
+    currency: str = None
     failure_url: str = None
     customer_id: str = None
     description: str = None
     locale: str = None
     pass_fees_to_customer: bool = None
     metadata: list[dict] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not self.items and not self.amount:
+            raise Exception("Either items or amount must be provided")
+
+        if self.amount:
+            if self.amount <= 10:
+                raise Exception("amount should be great than 10 dzd")
+            if  not self.currency:
+                raise Exception("Currency must be provided when amount is provided")
 
 
 @dataclass
@@ -57,11 +69,12 @@ class PaymentItem:
     quantity: int
     adjustable_quantity: bool = None
 
+
 @dataclass
 class PaymentLink:
     name: str
-    items : list[PaymentItem]
-    after_completion_message:str = None
-    locale : str = None
-    pass_fees_to_customer : bool = None
-    metadata : list[dict] = field(default_factory=list)
+    items: list[PaymentItem]
+    after_completion_message: str = None
+    locale: str = None
+    pass_fees_to_customer: bool = None
+    metadata: list[dict] = field(default_factory=list)
